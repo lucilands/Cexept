@@ -14,6 +14,6 @@ TODO
  - Custom Exceptions
 
 # TODO
-[ ] Custom error descriptions
-[ ] Better stacktraces
+- [ ] Custom error descriptions
+- [ ] Better stacktraces
 etc...
