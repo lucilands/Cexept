@@ -19,6 +19,7 @@ typedef struct {
 struct __cexception_frame {
   jmp_buf env;
   struct __cexception_frame *prev;
+  _Bool use;
   int code;
 };
 
@@ -32,16 +33,15 @@ struct __cexception_frame {
 #define __CEXEPT_UNIQUE_LABEL(a, b) __CEXEPT_UNIQUE_LABEL2(a, b)
 #define CEXEPT_THROW(type) __cexept_throw((cexception_t) {type, __cexet_get_str(type), __func__, __FILE__, __LINE__})
 #define CEXEPT_TRY(...) \
-                        __cexept_try = 1;\
                         struct __cexception_frame __excframe;\
                         __excframe.prev = __cexept_exc_stack;\
+                        __excframe.use = 1;\
                         __cexept_exc_stack = &__excframe;\
                         if (setjmp(__excframe.env) == 0) {\
                         __VA_ARGS__\
                         
 #define CEXEPT_CATCH(__exname__, ...) } else {\
                             cexception_t __exname__ = __cexception;\
-                            __cexept_try = 0;\
                             __VA_ARGS__\
                             }\
 
@@ -49,8 +49,6 @@ struct __cexception_frame {
 void __cexept_throw(cexception_t exeption);
 const char *__cexet_get_str(int code);
 
-extern int __cexept_try;
-extern int __cexept_triggered;
 extern cexception_t __cexception;
 extern struct __cexception_frame *__cexept_exc_stack;
 
@@ -61,8 +59,6 @@ extern struct __cexception_frame *__cexept_exc_stack;
 
 #include <execinfo.h>
 
-int __cexept_try = 0;
-int __cexept_triggered = 0;
 cexception_t __cexception = {0};
 jmp_buf __cexept_jmp_buf = {0};
 struct __cexception_frame *__cexept_exc_stack = 0;
@@ -74,9 +70,9 @@ const char *__cexet_get_str(int code) {
 }
 
 void __cexept_throw(cexception_t exception) {
-  if (__cexept_try) {
+  if (__cexept_exc_stack->use) {
     __cexception = exception;
-    __cexept_triggered = 1;
+    __cexept_exc_stack->use = 0;
     longjmp(__cexept_exc_stack->env, exception.code);
     return;
   }
