@@ -89,9 +89,9 @@ void __cexept_throw(cexception_t exception) {
     }
   }
   free(strings);
+  free(stacktrace);
 
   printf("%s:%i: in function %s: %s\n", exception.file, exception.line, exception.func, __cexet_get_str(exception.code));
-
   exit(exception.code);
 }
 
