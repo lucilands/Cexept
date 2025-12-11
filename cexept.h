@@ -5,7 +5,11 @@
 
 #ifndef CEXEPT_STACKTRACE_LEN
 #define CEXEPT_STACKTRACE_LEN 5
-#endif
+#endif //CEXEPT_STACKTRACE_LEN
+#ifndef CEXEPT_MAX_EXCEPTIONS
+#define CEXEPT_MAX_EXCEPTIONS 255
+#endif //CEXEPT_MAX_EXCEPTIONS
+
 
 typedef struct {
   int code;
@@ -27,28 +31,31 @@ struct __cexception_frame {
 #define THROW(type) CEXEPT_THROW(type)
 #define TRY(...) CEXEPT_TRY(__VA_ARGS__)
 #define CATCH(__exname__, ...) CEXEPT_CATCH(__exname__, __VA_ARGS__)
+#define ERROR_DESCRIPTION(__type, __descr) CEXEPT_ERROR_DESCRIPTION(__type, __descr)
 #endif //CEXEPT_NO_PREFIX
 
 #define __CEXEPT_UNIQUE_LABEL2(a, b) a##b
 #define __CEXEPT_UNIQUE_LABEL(a, b) __CEXEPT_UNIQUE_LABEL2(a, b)
-#define CEXEPT_THROW(type) __cexept_throw((cexception_t) {type, __cexet_get_str(type), __func__, __FILE__, __LINE__})
+#define CEXEPT_THROW(type) __cexept_throw((cexception_t) {type, __cexept_descrs[type], __func__, __FILE__, __LINE__})
 #define CEXEPT_TRY(...) \
                         struct __cexception_frame __excframe;\
                         __excframe.prev = __cexept_exc_stack;\
                         __excframe.use = 1;\
                         __cexept_exc_stack = &__excframe;\
                         if (setjmp(__excframe.env) == 0) {\
-                        __VA_ARGS__\
-                        
+                        __VA_ARGS__
+                      
 #define CEXEPT_CATCH(__exname__, ...) } else {\
                             cexception_t __exname__ = __cexception;\
                             __VA_ARGS__\
-                            }\
+                            }
+
+#define CEXEPT_ERROR_DESCRIPTION(__type, __descr) __cexept_descrs[__type] = __descr;
 
 
 void __cexept_throw(cexception_t exeption);
-const char *__cexet_get_str(int code);
 
+extern char * __cexept_descrs[CEXEPT_MAX_EXCEPTIONS];
 extern cexception_t __cexception;
 extern struct __cexception_frame *__cexept_exc_stack;
 
@@ -62,19 +69,16 @@ extern struct __cexception_frame *__cexept_exc_stack;
 cexception_t __cexception = {0};
 jmp_buf __cexept_jmp_buf = {0};
 struct __cexception_frame *__cexept_exc_stack = 0;
-
-const char *__cexet_get_str(int code) {
-  switch (code) {
-    default: return "Unknown exeption";
-  }
-}
+char * __cexept_descrs[CEXEPT_MAX_EXCEPTIONS];
 
 void __cexept_throw(cexception_t exception) {
-  if (__cexept_exc_stack->use) {
-    __cexception = exception;
-    __cexept_exc_stack->use = 0;
-    longjmp(__cexept_exc_stack->env, exception.code);
-    return;
+  if (__cexept_exc_stack) {
+    if (__cexept_exc_stack->use) {
+      __cexception = exception;
+      __cexept_exc_stack->use = 0;
+      longjmp(__cexept_exc_stack->env, exception.code);
+      return;
+    }
   }
 
   printf("stacktrace, most recent call last:\n");
@@ -91,7 +95,7 @@ void __cexept_throw(cexception_t exception) {
   free(strings);
   free(stacktrace);
 
-  printf("%s:%i: in function %s: %s\n", exception.file, exception.line, exception.func, __cexet_get_str(exception.code));
+  printf("%s:%i: in function %s: %s\n", exception.file, exception.line, exception.func, exception.descr);
   exit(exception.code);
 }
 
