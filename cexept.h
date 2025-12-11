@@ -44,7 +44,7 @@ struct __cexception_frame;
 #define __CEXEPT_UNIQUE_LABEL2(a, b) a##b
 #define __CEXEPT_UNIQUE_LABEL(a, b) __CEXEPT_UNIQUE_LABEL2(a, b)
 #define CEXEPT_THROW(type) __cexept_throw((cexception_t) {type, __cexept_descrs[type], __func__, __FILE__, __LINE__, (cexept_stacktrace_t){0}})
-#define CEXEPT_TRY(...) \
+#define CEXEPT_TRY(...) do {\
                         struct __cexception_frame __excframe;\
                         __excframe.prev = __cexept_exc_stack;\
                         __excframe.use = 1;\
@@ -53,9 +53,11 @@ struct __cexception_frame;
                         __VA_ARGS__
                       
 #define CEXEPT_CATCH(__exname__, ...) } else {\
-                            cexception_t __exname__ = __cexception;\
-                            __VA_ARGS__\
-                            }
+                              cexception_t __exname__ = __cexception;\
+                              __VA_ARGS__\
+                            }\
+                            __cexept_exc_stack = __excframe.prev;\
+                        } while (0);
 
 #define CEXEPT_ERROR_DESCRIPTION(__type, __descr) __cexept_descrs[__type] = __descr;
 
