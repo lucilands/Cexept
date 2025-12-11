@@ -16,5 +16,12 @@ TODO
 # TODO
 - [ ] Custom error descriptions
 - [ ] Better stacktraces
+- [ ] Being cross-compatable
+  - [x] Linux GCC
+  - [ ] Windows MinGW
+  - [ ] Windows MSVC
+  - [ ] MacOS (Untested)
+- [x] Memory safe
+- [x] Proper try catch
 
 etc...
