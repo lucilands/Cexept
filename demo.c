@@ -5,14 +5,15 @@
 #define SOME_ERROR 69
 
 void other_func() {
+  printf("before error\n");
   CEXEPT_RAISE(SOME_ERROR);
+  printf("after raise\n");
 }
 
 void some_func() {
   CEXEPT_TRY(
     other_func();
   )
-  cexception_t e;
   CEXEPT_CATCH(e,
     printf("Error caught! %s: %i\n", e.descr, e.code);
   )
