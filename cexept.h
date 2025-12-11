@@ -1,8 +1,6 @@
 #ifndef __CEXEPT_HEADER
 #define __CEXEPT_HEADER
 
-#include <setjmp.h>
-
 #ifndef CEXEPT_STACKTRACE_LEN
 #define CEXEPT_STACKTRACE_LEN 5
 #endif //CEXEPT_STACKTRACE_LEN
@@ -20,12 +18,7 @@ typedef struct {
   int line;
 } cexception_t;
 
-struct __cexception_frame {
-  jmp_buf env;
-  struct __cexception_frame *prev;
-  _Bool use;
-  int code;
-};
+struct __cexception_frame;
 
 #ifdef CEXEPT_NO_PREFIX
 #define THROW(type) CEXEPT_THROW(type)
@@ -62,8 +55,15 @@ extern struct __cexception_frame *__cexept_exc_stack;
 #ifdef CEXEPT_IMPLEMENTATION
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <setjmp.h>
 #include <execinfo.h>
+
+struct __cexception_frame {
+  jmp_buf env;
+  struct __cexception_frame *prev;
+  _Bool use;
+  int code;
+};
 
 cexception_t __cexception = {0};
 jmp_buf __cexept_jmp_buf = {0};
