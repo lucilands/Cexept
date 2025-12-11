@@ -21,6 +21,7 @@ void some_func() {
 }
 
 int main() {
+  ERROR_DESCRIPTION(SOME_ERROR, "Some error :)");
   some_func();
   other_func();
   return 0;
