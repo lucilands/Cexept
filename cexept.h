@@ -62,7 +62,6 @@ extern struct __cexception_frame *__cexept_exc_stack;
 #ifdef CEXEPT_IMPLEMENTATION
 #include <stdio.h>
 #include <stdlib.h>
-#include <ucontext.h>
 
 #include <execinfo.h>
 
