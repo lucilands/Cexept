@@ -22,9 +22,10 @@ struct __cexception_frame {
   int code;
 };
 
+
 #define __CEXEPT_UNIQUE_LABEL2(a, b) a##b
 #define __CEXEPT_UNIQUE_LABEL(a, b) __CEXEPT_UNIQUE_LABEL2(a, b)
-#define CEXEPT_RAISE(type) __cexept_throw((cexception_t) {type, __cexet_get_str(type), __func__, __FILE__, __LINE__})
+#define CEXEPT_THROW(type) __cexept_throw((cexception_t) {type, __cexet_get_str(type), __func__, __FILE__, __LINE__})
 #define CEXEPT_TRY(...) \
                         __cexept_try = 1;\
                         struct __cexception_frame __excframe;\

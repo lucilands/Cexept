@@ -6,7 +6,7 @@
 
 void other_func() {
   printf("before error\n");
-  CEXEPT_RAISE(SOME_ERROR);
+  CEXEPT_THROW(SOME_ERROR);
   printf("after raise\n");
 }
 
