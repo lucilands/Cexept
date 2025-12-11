@@ -61,6 +61,8 @@ struct __cexception_frame;
                         };
 
 #define CEXEPT_ERROR_DESCRIPTION(__type, __descr) __cexept_descrs[__type] = __descr;
+#define CEXEPT_FREE_STACKTRACE(stacktrace) for (unsigned int i = 0; i < (stacktrace.len); i++) {free((char*)(stacktrace).frames[i].func);free((char*)(stacktrace).frames[i].bin);}\
+                                           free(stacktrace.frames);
 
 
 void __cexept_throw(cexception_t exeption);
@@ -74,8 +76,15 @@ extern struct __cexception_frame *__cexept_exc_stack;
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
-#include <execinfo.h>
+
+#ifdef __unix__
 #include <dlfcn.h>
+#include <execinfo.h>
+#endif //__unix__
+#ifdef _WIN32
+#include <windows.h>
+#include <dbghelp.h>
+#endif //_WIN32
 
 struct __cexception_frame {
   jmp_buf env;
@@ -89,6 +98,7 @@ jmp_buf __cexept_jmp_buf = {0};
 struct __cexception_frame *__cexept_exc_stack = 0;
 char * __cexept_descrs[CEXEPT_MAX_EXCEPTIONS];
 
+#ifdef __unix__
 cexept_stacktrace_t cexept_backtrace() {
   void **stacktrace = malloc(CEXEPT_STACKTRACE_LEN * sizeof(void*));
   if (!stacktrace) {printf("ERROR: INTERNAL: Failed to allocate memory\n"); exit(1);}
@@ -106,8 +116,8 @@ cexept_stacktrace_t cexept_backtrace() {
     Dl_info info;
     if (dladdr(stacktrace[i], &info)) {
       ret.frames[i] = (cexept_stackframe_t) {
-        info.dli_fname,
-        info.dli_sname ? info.dli_sname : "??",
+        strdup(info.dli_fname),
+        info.dli_sname ? strdup(info.dli_sname) : "??",
 
         (unsigned int *)stacktrace[i] - (unsigned int *)info.dli_saddr
       };
@@ -118,6 +128,57 @@ cexept_stacktrace_t cexept_backtrace() {
   }
   return ret;
 }
+#endif //__unix__
+#ifdef _WIN32
+static void resolve(void *addr, cexept_stackframe_t *f) {
+    HANDLE p = GetCurrentProcess();
+    SymInitialize(p, NULL, TRUE);
+
+    DWORD64 base = SymGetModuleBase64(p, (DWORD64)addr);
+    char modbuf[MAX_PATH];
+    if (base && GetModuleFileNameA((HMODULE)base, modbuf, MAX_PATH))
+        f->bin = _strdup(modbuf);
+    else
+        f->bin = _strdup("??");
+
+    BYTE buf[sizeof(SYMBOL_INFO) + 256];
+    PSYMBOL_INFO s = (PSYMBOL_INFO)buf;
+    s->SizeOfStruct = sizeof(SYMBOL_INFO);
+    s->MaxNameLen = 255;
+
+    if (SymFromAddr(p, (DWORD64)addr, NULL, s)) {
+        f->func = _strdup(s->Name);
+        f->offset = (unsigned int)((DWORD64)addr - s->Address);
+    } else {
+        f->func = _strdup("??");
+        f->offset = 0;
+    }
+}
+
+cexept_stacktrace_t cexept_backtrace() {
+    enum { N = 64 };
+    void **buf = malloc(N * sizeof(void*));
+    unsigned short n = RtlCaptureStackBackTrace(0, N, buf, NULL);
+
+    if (n <= 1) {
+        free(buf);
+        return (cexept_stacktrace_t){ NULL, 0 };
+    }
+
+    void **stk = buf + 1;
+    n--;
+
+    cexept_stacktrace_t out = {
+        malloc(n * sizeof(cexept_stackframe_t)),
+        n
+    };
+
+    for (unsigned int i = 0; i < n; i++)
+        resolve(stk[i], &out.frames[i]);
+
+    return out;
+}
+#endif //_WIN32
 
 void __cexept_throw(cexception_t exception) {
   cexept_stacktrace_t stacktrace = cexept_backtrace();
@@ -137,7 +198,8 @@ void __cexept_throw(cexception_t exception) {
     cexept_stackframe_t frame = stacktrace.frames[i];
     printf("  %s + 0x%x in %s\n", frame.bin, frame.offset, frame.func);
   }
-  free(stacktrace.frames);
+  CEXEPT_FREE_STACKTRACE(stacktrace);
+  //free(stacktrace.frames);
 
   printf("%s:%i: in function %s: %s\n", exception.file, exception.line, exception.func, exception.descr);
   exit(exception.code);

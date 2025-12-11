@@ -73,8 +73,8 @@ To get function names in the stacktrace the binary has to be compiled with `-rdy
 - [x] Better stacktraces
 - [ ] Being cross-compatable
   - [x] Linux GCC
-  - [ ] Windows MinGW
-  - [ ] Windows MSVC
+  - [x] Windows MinGW
+  - [x] Windows MSVC (Not tested, but should work)
   - [ ] MacOS (Untested)
 - [x] Memory safe
 - [x] Proper try catch
