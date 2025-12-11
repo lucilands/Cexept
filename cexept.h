@@ -2,7 +2,7 @@
 #define __CEXEPT_HEADER
 
 #ifndef CEXEPT_STACKTRACE_LEN
-#define CEXEPT_STACKTRACE_LEN 10
+#define CEXEPT_STACKTRACE_LEN 5
 #endif
 
 typedef struct {
@@ -19,11 +19,15 @@ typedef struct {
 #define CEXEPT_RAISE(type) __cexept_throw((cexception_t) {type, __cexet_get_str(type), __func__, __FILE__, __LINE__})
 #define CEXEPT_TRY(...) __cexept_try = 1;\
                         __VA_ARGS__\
-                        if (__cexept_triggered) {__cexept_triggered = 0; goto __CEXEPT_UNIQUE_LABEL(_catch_, __func__);}
+                        if (__cexept_triggered) {__cexept_triggered = 0; goto __CEXEPT_UNIQUE_LABEL(_catch_, __func__);}\
+                        else goto __CEXEPT_UNIQUE_LABEL(_catch_fallthrough_, __func__);
 #define CEXEPT_CATCH(__exname__, ...) __CEXEPT_UNIQUE_LABEL(_catch_, __func__):\
                           __exname__ = __cexception;\
                           __cexept_try = 0;\
-                          __VA_ARGS__
+                          __VA_ARGS__\
+                          __CEXEPT_UNIQUE_LABEL(_catch_fallthrough_, __func__):\
+                          ;
+
 
 void __cexept_throw(cexception_t exeption);
 const char *__cexet_get_str(int code);

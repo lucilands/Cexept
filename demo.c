@@ -20,6 +20,6 @@ void some_func() {
 
 int main() {
   some_func();
-  CEXEPT_RAISE(10);
+  other_func();
   return 0;
 }
