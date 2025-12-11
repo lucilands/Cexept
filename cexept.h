@@ -22,6 +22,11 @@ struct __cexception_frame {
   int code;
 };
 
+#ifdef CEXEPT_NO_PREFIX
+#define THROW(type) CEXEPT_THROW(type)
+#define TRY(...) CEXEPT_TRY(__VA_ARGS__)
+#define CATCH(__exname__, ...) CEXEPT_CATCH(__exname__, __VA_ARGS__)
+#endif //CEXEPT_NO_PREFIX
 
 #define __CEXEPT_UNIQUE_LABEL2(a, b) a##b
 #define __CEXEPT_UNIQUE_LABEL(a, b) __CEXEPT_UNIQUE_LABEL2(a, b)

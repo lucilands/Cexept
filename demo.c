@@ -1,4 +1,5 @@
 #define CEXEPT_IMPLEMENTATION
+#define CEXEPT_NO_PREFIX
 #include "cexept.h"
 
 
@@ -6,15 +7,15 @@
 
 void other_func() {
   printf("before error\n");
-  CEXEPT_THROW(SOME_ERROR);
-  printf("after raise\n");
+  THROW(SOME_ERROR);
+  printf("after error\n");
 }
 
 void some_func() {
-  CEXEPT_TRY(
+  TRY(
     other_func();
   )
-  CEXEPT_CATCH(e,
+  CATCH(e,
     printf("Error caught! %s: %i\n", e.descr, e.code);
   )
 }
