@@ -43,7 +43,7 @@ struct __cexception_frame;
 
 #define __CEXEPT_UNIQUE_LABEL2(a, b) a##b
 #define __CEXEPT_UNIQUE_LABEL(a, b) __CEXEPT_UNIQUE_LABEL2(a, b)
-#define CEXEPT_THROW(type) __cexept_throw((cexception_t) {type, __cexept_descrs[type], __func__, __FILE__, __LINE__, (cexept_stacktrace_t){0}})
+#define CEXEPT_THROW(type) __cexept_throw((cexception_t) {type, __cexept_descrs[type] ? __cexept_descrs[type] : "Unknown error", __func__, __FILE__, __LINE__, (cexept_stacktrace_t){0}})
 #define CEXEPT_TRY(...) do {\
                         struct __cexception_frame __excframe;\
                         __excframe.prev = __cexept_exc_stack;\
