@@ -61,8 +61,6 @@ struct __cexception_frame;
                         };
 
 #define CEXEPT_ERROR_DESCRIPTION(__type, __descr) __cexept_descrs[__type] = __descr;
-#define CEXEPT_FREE_STACKTRACE(stacktrace) for (unsigned int i = 0; i < (stacktrace.len); i++) {free((char*)(stacktrace).frames[i].func);free((char*)(stacktrace).frames[i].bin);}\
-                                           free(stacktrace.frames);
 
 
 void __cexept_throw(cexception_t exeption);
@@ -102,6 +100,7 @@ char * __cexept_descrs[CEXEPT_MAX_EXCEPTIONS];
 #ifdef __unix__
 cexept_stacktrace_t cexept_backtrace() {
   void **stacktrace = malloc(CEXEPT_STACKTRACE_LEN * sizeof(void*));
+  void **stacktrace_orig = stacktrace;
   if (!stacktrace) {printf("ERROR: INTERNAL: Failed to allocate memory\n"); exit(1);}
 
   unsigned int size = backtrace(stacktrace, CEXEPT_STACKTRACE_LEN);
@@ -117,8 +116,8 @@ cexept_stacktrace_t cexept_backtrace() {
     Dl_info info;
     if (dladdr(stacktrace[i], &info)) {
       ret.frames[i] = (cexept_stackframe_t) {
-        strdup(info.dli_fname),
-        info.dli_sname ? strdup(info.dli_sname) : strdup("??"),
+        info.dli_fname,
+        info.dli_sname ? info.dli_sname : "??",
 
         (unsigned int *)stacktrace[i] - (unsigned int *)info.dli_saddr
       };
@@ -127,6 +126,7 @@ cexept_stacktrace_t cexept_backtrace() {
       printf("WARNING: INTERNAL: Failed to fetch stacktrace func\n");
     }
   }
+  free(stacktrace_orig);
   return ret;
 }
 #endif //__unix__
@@ -199,8 +199,7 @@ void __cexept_throw(cexception_t exception) {
     cexept_stackframe_t frame = stacktrace.frames[i];
     printf("  %s + 0x%x in %s\n", frame.bin, frame.offset, frame.func);
   }
-  CEXEPT_FREE_STACKTRACE(stacktrace);
-  //free(stacktrace.frames);
+  free(stacktrace.frames);
 
   printf("%s:%i: in function %s: %s\n", exception.file, exception.line, exception.func, exception.descr);
   exit(exception.code);
