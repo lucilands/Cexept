@@ -80,6 +80,7 @@ extern struct __cexception_frame *__cexept_exc_stack;
 #ifdef __unix__
 #include <dlfcn.h>
 #include <execinfo.h>
+#include <string.h>
 #endif //__unix__
 #ifdef _WIN32
 #include <windows.h>
@@ -117,7 +118,7 @@ cexept_stacktrace_t cexept_backtrace() {
     if (dladdr(stacktrace[i], &info)) {
       ret.frames[i] = (cexept_stackframe_t) {
         strdup(info.dli_fname),
-        info.dli_sname ? strdup(info.dli_sname) : "??",
+        info.dli_sname ? strdup(info.dli_sname) : strdup("??"),
 
         (unsigned int *)stacktrace[i] - (unsigned int *)info.dli_saddr
       };
