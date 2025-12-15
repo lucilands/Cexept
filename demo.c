@@ -16,7 +16,7 @@ void some_func() {
     other_func();
   )
   CATCH(e,
-    printf("Error caught! %s: %i\n", e.descr, e.code);
+    printf("Error caught! %s: %i\n  from function %s at %s:%i\n", e.descr, e.code, e.func, e.file, e.line);
   )
 }
 
